@@ -73,12 +73,15 @@ class Monitor extends BeanModel {
 
         let notificationIDList = {};
 
-        let list = await R.find("monitor_notification", " monitor_id = ? ", [
+        let list = await R.getAll("SELECT t.id, mn.type FROM notification t LEFT JOIN monitor_notification mn on t.id = mn.notification_id AND monitor_id = ?", [
             this.id,
         ]);
 
         for (let bean of list) {
-            notificationIDList[bean.notification_id] = true;
+            notificationIDList[bean.id] = {
+                active: bean.type !== null,
+                type: bean.type ?? "both",
+            };
         }
 
         const tags = await this.getTags();
@@ -1424,7 +1427,13 @@ class Monitor extends BeanModel {
                     heartbeatJSON["timezoneOffset"] = UptimeKumaServer.getInstance().getTimezoneOffset();
                     heartbeatJSON["localDateTime"] = dayjs.utc(heartbeatJSON["time"]).tz(heartbeatJSON["timezone"]).format(SQL_DATETIME_FORMAT);
 
-                    await Notification.send(JSON.parse(notification.config), msg, await monitor.toJSON(false), heartbeatJSON);
+                    if (
+                        notification.type === "both" ||
+                        (notification.type === "up" && bean.status === UP) ||
+                        (notification.type === "down" && bean.status === DOWN)
+                    ) {
+                        await Notification.send(JSON.parse(notification.config), msg, await monitor.toJSON(false), heartbeatJSON);
+                    }
                 } catch (e) {
                     log.error("monitor", "Cannot send notification to " + notification.name);
                     log.error("monitor", e);
@@ -1439,7 +1448,7 @@ class Monitor extends BeanModel {
      * @returns {Promise<LooseObject<any>[]>}
      */
     static async getNotificationList(monitor) {
-        let notificationList = await R.getAll("SELECT notification.* FROM notification, monitor_notification WHERE monitor_id = ? AND monitor_notification.notification_id = notification.id ", [
+        let notificationList = await R.getAll("SELECT notification.*, monitor_notification.type FROM notification, monitor_notification WHERE monitor_id = ? AND monitor_notification.notification_id = notification.id ", [
             monitor.id,
         ]);
         return notificationList;

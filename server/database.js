@@ -85,6 +85,7 @@ class Database {
         "patch-fix-kafka-producer-booleans.sql": true,
         "patch-timeout.sql": true,
         "patch-monitor-tls-info-add-fk.sql": true,
+        "patch-monitor-notification-type.sql": true,
     };
 
     /**

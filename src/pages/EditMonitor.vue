@@ -532,15 +532,30 @@
                                 {{ $t("Not available, please setup.") }}
                             </p>
 
-                            <div v-for="notification in $root.notificationList" :key="notification.id" class="form-check form-switch my-3">
-                                <input :id=" 'notification' + notification.id" v-model="monitor.notificationIDList[notification.id]" class="form-check-input" type="checkbox">
+                            <div v-if="Object.keys(monitor.notificationIDList).length > 0">
+                                <div v-for="notification in $root.notificationList" :key="notification.id" class="form-check form-switch my-3">
+                                    <input :id=" 'notification' + notification.id" v-model="monitor.notificationIDList[notification.id].active" class="form-check-input" type="checkbox">
 
-                                <label class="form-check-label" :for=" 'notification' + notification.id">
-                                    {{ notification.name }}
-                                    <a href="#" @click="$refs.notificationDialog.show(notification.id)">{{ $t("Edit") }}</a>
-                                </label>
+                                    <label class="form-check-label" :for=" 'notification' + notification.id">
+                                        {{ notification.name }}
+                                        <a href="#" @click="$refs.notificationDialog.show(notification.id)">{{ $t("Edit") }}</a>
+                                    </label>
 
-                                <span v-if="notification.isDefault == true" class="badge bg-primary ms-2">{{ $t("Default") }}</span>
+                                    <span v-if="notification.isDefault == true" class="badge bg-primary ms-2">{{ $t("Default") }}</span>
+                                    <div v-if="monitor.notificationIDList[notification.id].active">
+                                        <select id="notificationType" v-model="monitor.notificationIDList[notification.id].type" class="form-select">
+                                            <option value="both">
+                                                {{ $t("notificationTypeBoth") }}
+                                            </option>
+                                            <option value="up">
+                                                {{ $t("notificationTypeUp") }}
+                                            </option>
+                                            <option value="down">
+                                                {{ $t("notificationTypeDown") }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <button class="btn btn-primary me-2" type="button" @click="$refs.notificationDialog.show()">
@@ -1131,7 +1146,7 @@ message HealthCheckResponse {
                     value: null,
                 }];
             }
-        }
+        },
     },
     watch: {
         "$root.proxyList"() {
@@ -1277,9 +1292,10 @@ message HealthCheckResponse {
                 }
 
                 for (let i = 0; i < this.$root.notificationList.length; i++) {
-                    if (this.$root.notificationList[i].isDefault === true) {
-                        this.monitor.notificationIDList[this.$root.notificationList[i].id] = true;
-                    }
+                    this.monitor.notificationIDList[this.$root.notificationList[i].id] = {
+                        active: this.$root.notificationList[i].isDefault === true,
+                        type: "both",
+                    };
                 }
             } else if (this.isEdit || this.isClone) {
                 this.$root.getSocket().emit("getMonitor", this.$route.params.id, (res) => {
@@ -1481,7 +1497,10 @@ message HealthCheckResponse {
          * @param {number} id ID of notification to add
          */
         addedNotification(id) {
-            this.monitor.notificationIDList[id] = true;
+            this.monitor.notificationIDList[id] = {
+                active: true,
+                type: "both",
+            };
         },
 
         /**

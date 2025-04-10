@@ -237,6 +237,7 @@ async function applyNotificationEveryMonitor(notificationID, userID) {
             let relation = R.dispense("monitor_notification");
             relation.monitor_id = monitors[i].id;
             relation.notification_id = notificationID;
+            relation.type = checkNotification.type ?? "both";
             await R.store(relation);
         }
     }

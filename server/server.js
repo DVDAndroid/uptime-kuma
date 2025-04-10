@@ -1676,10 +1676,11 @@ async function updateMonitorNotification(monitorID, notificationIDList) {
     ]);
 
     for (let notificationID in notificationIDList) {
-        if (notificationIDList[notificationID]) {
+        if (notificationIDList[notificationID].active) {
             let relation = R.dispense("monitor_notification");
             relation.monitor_id = monitorID;
             relation.notification_id = notificationID;
+            relation.type = notificationIDList[notificationID].type;
             await R.store(relation);
         }
     }
