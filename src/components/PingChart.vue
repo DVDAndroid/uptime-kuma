@@ -19,7 +19,7 @@
             </ul>
         </div>
         <div class="chart-wrapper" :class="{ loading: loading }">
-            <Line :data="chartData" :options="chartOptions" />
+            <Line ref="chart" :data="chartData" :options="chartOptions" />
         </div>
     </div>
 </template>
@@ -29,8 +29,9 @@ import { BarController, BarElement, Chart, Filler, LinearScale, LineController, 
 import "chartjs-adapter-dayjs-4";
 import { Line } from "vue-chartjs";
 import { UP, DOWN, PENDING, MAINTENANCE } from "../util.ts";
+import zoomPlugin from "chartjs-plugin-zoom";
 
-Chart.register(LineController, BarController, LineElement, PointElement, TimeScale, BarElement, LinearScale, Tooltip, Filler);
+Chart.register(LineController, BarController, LineElement, PointElement, TimeScale, BarElement, LinearScale, Tooltip, Filler, zoomPlugin);
 
 export default {
     components: { Line },
@@ -160,6 +161,27 @@ export default {
                     legend: {
                         display: false,
                     },
+                    zoom: {
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: "x",
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: "x",
+                        },
+                        limits: {
+                            x: {
+                                min: "original",
+                                max: "original",
+                            },
+                        },
+                    },
                 },
             };
         },
@@ -174,6 +196,9 @@ export default {
     watch: {
         // Update chart data when the selected chart period changes
         chartPeriodHrs: function (newPeriod) {
+            const chart = this.$refs.chart.chart;
+            chart.resetZoom();
+
             if (this.chartDataFetchInterval) {
                 clearInterval(this.chartDataFetchInterval);
                 this.chartDataFetchInterval = null;
